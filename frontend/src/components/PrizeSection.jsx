@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 
-import bicycle from "../assets/images/bicycle.png";
+import bicycle from "../assets/images/Bicycle.png";
 import fan from "../assets/images/fan.png";
 import lamp from "../assets/images/lamp.png";
 import bag from "../assets/images/bag.png";
