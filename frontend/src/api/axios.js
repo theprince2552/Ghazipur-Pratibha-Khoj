@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://127.0.0.1:8000/api",
+  baseURL: import.meta.env.VITE_API_URL,
   headers: {
     "Content-Type": "application/json",
   },
@@ -50,28 +50,27 @@ api.interceptors.response.use(
       }
 
       try {
-        const response = await axios.post(
-          "http://127.0.0.1:8000/api/users/token/refresh/",
-          {
-            refresh: refreshToken,
-          }
-        );
+  const response = await axios.post(
+    `${import.meta.env.VITE_API_URL}/users/token/refresh/`,
+    {
+      refresh: refreshToken,
+    }
+  );
 
-        const newAccessToken = response.data.access;
+  const newAccessToken = response.data.access;
 
-        localStorage.setItem("access_token", newAccessToken);
+  localStorage.setItem("access_token", newAccessToken);
 
-        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+  originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
 
-        return api(originalRequest);
-      } catch (refreshError) {
-        localStorage.removeItem("access_token");
-        localStorage.removeItem("refresh_token");
+  return api(originalRequest);
+} catch (refreshError) {
+  localStorage.removeItem("access_token");
+  localStorage.removeItem("refresh_token");
+  window.location.href = "/login";
 
-        window.location.href = "/login";
-
-        return Promise.reject(refreshError);
-      }
+  return Promise.reject(refreshError);
+}
     }
 
     return Promise.reject(error);
