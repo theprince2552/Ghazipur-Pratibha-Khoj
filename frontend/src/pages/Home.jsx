@@ -1,6 +1,6 @@
 import Navbar from "../components/Navbar";
 import Hero from "../components/Hero";
-import Chairman from "../components/Chairman";
+import Chairman from "../components/chairman";
 import About from "../components/About";
 import Features from "../components/Features";
 import Scholarship from "../components/Scholarship";
