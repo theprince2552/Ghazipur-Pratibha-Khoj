@@ -1,9 +1,8 @@
-from django.core.mail import send_mail
-from django.conf import settings
+import os
+import resend
 
 
 def send_otp_email(email, otp):
-
     subject = "Ghazipur Pratibha Khoj - OTP Verification"
 
     message = f"""
@@ -22,10 +21,18 @@ Ghazipur Pratibha Khoj
 Nishchay Academy Association
 """
 
-    send_mail(
-        subject,
-        message,
-        settings.EMAIL_HOST_USER,
-        [email],
-        fail_silently=False,
+    api_key = os.getenv("RESEND_API_KEY")
+
+    if not api_key:
+        raise Exception("RESEND_API_KEY is not configured.")
+
+    resend.api_key = api_key
+
+    return resend.Emails.send(
+        {
+            "from": "noreply@ghazipurpratibhakhoj.com",
+            "to": [email],
+            "subject": subject,
+            "text": message,
+        }
     )
