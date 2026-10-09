@@ -470,6 +470,36 @@ function ApplicationForm() {
       <div className="relative max-w-6xl mx-auto">
 
 
+      {/* TOP NAVIGATION BUTTONS */}
+<div className="flex items-center justify-between gap-4 mb-8">
+
+  {/* BACK BUTTON */}
+  <button
+    type="button"
+    onClick={() => navigate(-1)}
+    className="inline-flex items-center gap-2 px-5 py-3 rounded-xl
+    border border-white/10 bg-white/5 text-gray-300 font-semibold
+    hover:bg-white/10 hover:text-white transition duration-300"
+  >
+    <span className="text-xl">←</span>
+    <span>Back</span>
+  </button>
+
+  {/* DASHBOARD BUTTON */}
+  <button
+    type="button"
+    onClick={() => navigate("/dashboard")}
+    className="inline-flex items-center gap-2 px-5 py-3 rounded-xl
+    bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold
+    hover:scale-[1.03] transition duration-300
+    shadow-lg shadow-blue-900/20"
+  >
+    <span>Dashboard</span>
+    <span className="text-lg">→</span>
+  </button>
+
+</div>
+
         {/* ================================= */}
         {/* HEADER */}
         {/* ================================= */}

@@ -26,7 +26,7 @@ load_dotenv(BASE_DIR / ".env")
 
 SECRET_KEY = config("SECRET_KEY")
 
-DEBUG = config("DEBUG", cast=bool, default=True)
+DEBUG = config("DEBUG", cast=bool, default=False)
 
 
 # ============================================================
@@ -248,26 +248,7 @@ CSRF_TRUSTED_ORIGINS = [
 AUTH_USER_MODEL = "users.User"
 
 
-# ============================================================
-# EMAIL / SMTP
-# ============================================================
 
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-
-EMAIL_HOST = "smtp.gmail.com"
-
-EMAIL_PORT = 587
-
-EMAIL_USE_TLS = True
-
-EMAIL_HOST_USER = config("EMAIL_HOST_USER")
-
-EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD")
-
-DEFAULT_FROM_EMAIL = os.getenv(
-    "DEFAULT_FROM_EMAIL",
-    EMAIL_HOST_USER,
-)
 
 
 # ============================================================

@@ -45,8 +45,6 @@ const AdminDashboard = () => {
                 }
             );
 
-            console.log("ADMIN APPLICATION RESPONSE:", response.data);
-
             const apiData = response.data;
 
             let applicationList = [];
@@ -73,6 +71,7 @@ const AdminDashboard = () => {
                 navigate("/admin/login");
                 return;
             }
+
 
             const errorMessage =
                 error.response?.data?.message ||

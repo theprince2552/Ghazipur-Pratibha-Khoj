@@ -54,102 +54,86 @@ function Login() {
     try {
         setLoading(true);
 
-        // =========================
-        // LOGIN
-        // =========================
-
+        // LOGIN REQUEST
         const response = await loginUser(formData);
 
-        if (!response.success) {
-            toast.error(response.message || "Login failed.");
+        if (!response?.success) {
+            toast.error(
+                response?.message || "Invalid email or password."
+            );
             return;
         }
 
-        // Save token + user
+        // SAVE LOGIN DATA
         login(response);
 
         toast.success("Login successful!");
-
-        // =========================
-        // CHECK USER ROLE
-        // =========================
 
         const loggedInUser =
             response?.data?.user ||
             response?.user;
 
-        // ADMIN
-        // =========================
-
+        // ADMIN REDIRECT
         if (loggedInUser?.role === "admin") {
             navigate("/admin/dashboard");
             return;
         }
 
-        // =========================
-        // STUDENT
-        // =========================
-
-        await new Promise((resolve) =>
-            setTimeout(resolve, 100)
-        );
-
-        const token =
-            localStorage.getItem("access_token");
-
+        // STUDENT APPLICATION CHECK
         const applicationResponse = await api.get(
-            "/exams/application/",
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            }
+            "/exams/application/"
         );
 
         const application =
             applicationResponse.data?.data;
 
-        console.log(
-            "APPLICATION DATA:",
-            application
-        );
-
-        // No application
         if (!application) {
             navigate("/application");
             return;
         }
 
-        // Submitted application
         if (application.status === "submitted") {
             navigate("/dashboard");
             return;
         }
 
-        // Draft application
         navigate("/application");
 
     } catch (error) {
-        console.error(
-            "LOGIN/APPLICATION ERROR:",
-            error
-        );
+        console.error("LOGIN ERROR:", error);
 
-        // Application not found / unauthorized
-        if (
-            error.response?.status === 401 ||
-            error.response?.status === 404
-        ) {
+        const status = error.response?.status;
+
+        // LOGIN FAILURE: SHOW ERROR, DON'T REDIRECT
+        if (error.config?.url?.includes("/users/login/")) {
+            const message =
+                error.response?.data?.message ||
+                error.response?.data?.detail ||
+                error.response?.data?.error ||
+                "Invalid email or password.";
+
+            toast.error(message);
+            return;
+        }
+
+        // APPLICATION API ERROR
+        if (status === 404) {
             navigate("/application");
             return;
         }
 
-        const message =
+        if (status === 401) {
+            toast.error(
+                "Your session could not be verified. Please log in again."
+            );
+            return;
+        }
+
+        toast.error(
             error.response?.data?.message ||
             error.response?.data?.detail ||
-            "Invalid email or password.";
-
-        toast.error(message);
+            "Something went wrong. Please try again."
+        );
 
     } finally {
         setLoading(false);

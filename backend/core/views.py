@@ -1,10 +1,10 @@
-from django.shortcuts import render
+import os
 import random
 
 from datetime import timedelta
 
-from django.conf import settings
-from django.core.mail import send_mail
+import resend
+
 from django.utils import timezone
 from django.core import signing
 
@@ -20,6 +20,7 @@ from users.serializers import (
     VerifyOTPSerializer,
     ResetPasswordSerializer,
 )
+
 
 # =========================================================
 # FORGOT PASSWORD - SEND OTP
@@ -61,7 +62,10 @@ class ForgotPasswordView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        # Old forgot-password OTPs invalidate
+        # -------------------------------------------------
+        # INVALIDATE OLD FORGOT PASSWORD OTPS
+        # -------------------------------------------------
+
         OTPVerification.objects.filter(
             user=user,
             purpose="forgot_password",
@@ -70,7 +74,10 @@ class ForgotPasswordView(APIView):
             is_used=True
         )
 
-        # New OTP
+        # -------------------------------------------------
+        # GENERATE NEW OTP
+        # -------------------------------------------------
+
         otp = str(
             random.randint(100000, 999999)
         )
@@ -85,11 +92,29 @@ class ForgotPasswordView(APIView):
             )
         )
 
-        # Email
-        send_mail(
-            subject="Ghazipur Pratibha Khoj - Password Reset OTP",
+        # -------------------------------------------------
+        # SEND OTP USING RESEND
+        # -------------------------------------------------
 
-            message=f"""
+        api_key = os.getenv("RESEND_API_KEY")
+
+        if not api_key:
+
+            otp_record.delete()
+
+            return Response(
+                {
+                    "success": False,
+                    "message": "Email service is not configured."
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+        try:
+
+            resend.api_key = api_key
+
+            message = f"""
 Hello {user.full_name},
 
 Your OTP for resetting your password is:
@@ -103,14 +128,30 @@ please ignore this email.
 
 Regards,
 Ghazipur Pratibha Khoj
-""",
+Nishchay Academy Association
+"""
 
-            from_email=settings.DEFAULT_FROM_EMAIL,
+            resend.Emails.send(
+                {
+                    "from": "noreply@ghazipurpratibhakhoj.com",
+                    "to": [user.email],
+                    "subject": "Ghazipur Pratibha Khoj - Password Reset OTP",
+                    "text": message,
+                }
+            )
 
-            recipient_list=[user.email],
+        except Exception:
 
-            fail_silently=False,
-        )
+            # Email failed, so remove this OTP
+            otp_record.delete()
+
+            return Response(
+                {
+                    "success": False,
+                    "message": "Unable to send OTP email."
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
         return Response(
             {
@@ -162,6 +203,10 @@ class VerifyForgotPasswordOTPView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        # -------------------------------------------------
+        # FIND VALID OTP
+        # -------------------------------------------------
+
         otp_record = (
             OTPVerification.objects
             .filter(
@@ -183,6 +228,10 @@ class VerifyForgotPasswordOTPView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        # -------------------------------------------------
+        # CHECK OTP EXPIRY
+        # -------------------------------------------------
+
         if otp_record.is_expired():
 
             return Response(
@@ -193,7 +242,10 @@ class VerifyForgotPasswordOTPView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Secure temporary reset token
+        # -------------------------------------------------
+        # CREATE SECURE RESET TOKEN
+        # -------------------------------------------------
+
         reset_token = signing.dumps(
             {
                 "user_id": user.id,
@@ -233,7 +285,10 @@ class ResetPasswordView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Verify token
+        # -------------------------------------------------
+        # VERIFY RESET TOKEN
+        # -------------------------------------------------
+
         try:
 
             data = signing.loads(
@@ -250,6 +305,10 @@ class ResetPasswordView(APIView):
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+        # -------------------------------------------------
+        # GET USER + OTP
+        # -------------------------------------------------
 
         try:
 
@@ -277,7 +336,10 @@ class ResetPasswordView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # OTP expiry check
+        # -------------------------------------------------
+        # CHECK OTP EXPIRY
+        # -------------------------------------------------
+
         if otp_record.is_expired():
 
             return Response(
@@ -287,6 +349,10 @@ class ResetPasswordView(APIView):
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+        # -------------------------------------------------
+        # VALIDATE NEW PASSWORD
+        # -------------------------------------------------
 
         serializer = ResetPasswordSerializer(
             data=request.data
@@ -302,7 +368,10 @@ class ResetPasswordView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Change password
+        # -------------------------------------------------
+        # CHANGE PASSWORD
+        # -------------------------------------------------
+
         user.set_password(
             serializer.validated_data["new_password"]
         )
@@ -311,7 +380,10 @@ class ResetPasswordView(APIView):
             update_fields=["password"]
         )
 
-        # OTP can never be reused
+        # -------------------------------------------------
+        # OTP CAN NEVER BE USED AGAIN
+        # -------------------------------------------------
+
         otp_record.is_used = True
 
         otp_record.save(
@@ -325,4 +397,3 @@ class ResetPasswordView(APIView):
             },
             status=status.HTTP_200_OK
         )
-

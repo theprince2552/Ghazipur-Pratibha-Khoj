@@ -33,10 +33,17 @@ api.interceptors.response.use(
 
     // Access token expired
     if (
-      error.response?.status === 401 &&
-      !originalRequest._retry &&
-      !originalRequest.url.includes("/users/token/refresh/")
-    ) {
+  error.response?.status === 401 &&
+  !originalRequest._retry &&
+  !originalRequest.url.includes("/users/token/refresh/") &&
+  !originalRequest.url.includes("/users/login/") &&
+  !originalRequest.url.includes("/users/register/") &&
+  !originalRequest.url.includes("/users/verify-otp/") &&
+  !originalRequest.url.includes("/users/resend-otp/") &&
+  !originalRequest.url.includes("/core/forgot-password/") &&
+  !originalRequest.url.includes("/core/verify-forgot-otp/") &&
+  !originalRequest.url.includes("/core/reset-password/")
+) {
       originalRequest._retry = true;
 
       const refreshToken = localStorage.getItem("refresh_token");
