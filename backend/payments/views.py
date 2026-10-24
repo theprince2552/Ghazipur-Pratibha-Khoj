@@ -61,15 +61,18 @@ class CreateOrderView(APIView):
                 status=status.HTTP_201_CREATED,
             )
 
-        except Exception as e:
+        except Exception:
+            import logging
+
+            logger = logging.getLogger(__name__)
+            logger.exception("Razorpay order creation failed")
 
             return Response(
                 {
                     "success": False,
-                    "message": "Unable to create payment order.",
-                    "error": str(e),
+                    "message": "Unable to create payment order."
                 },
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                status=500
             )
 
 
@@ -78,86 +81,46 @@ class CreateOrderView(APIView):
 # =========================================================
 
 class VerifyPaymentView(APIView):
-
     permission_classes = [IsAuthenticated]
 
     @transaction.atomic
     def post(self, request):
-
-        order_id = request.data.get(
-            "razorpay_order_id"
-        )
-
-        payment_id = request.data.get(
-            "razorpay_payment_id"
-        )
-
-        signature = request.data.get(
-            "razorpay_signature"
-        )
-
-        # -------------------------------------------------
-        # Check required data
-        # -------------------------------------------------
+        order_id = request.data.get("razorpay_order_id")
+        payment_id = request.data.get("razorpay_payment_id")
+        signature = request.data.get("razorpay_signature")
 
         if not order_id or not payment_id or not signature:
-
             return Response(
                 {
                     "success": False,
-                    "message": "Payment verification data is incomplete."
+                    "message": "Payment verification data is incomplete.",
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # -------------------------------------------------
-        # Find payment belonging to current user
-        # -------------------------------------------------
-
         try:
-
             payment = Payment.objects.select_for_update().get(
                 razorpay_order_id=order_id,
                 user=request.user,
             )
-
         except Payment.DoesNotExist:
-
             return Response(
                 {
                     "success": False,
-                    "message": "Payment order not found."
+                    "message": "Payment order not found.",
                 },
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        # -------------------------------------------------
-        # Already paid
-        # -------------------------------------------------
-
-        if payment.status == "paid":
-
-            return Response(
-                {
-                    "success": True,
-                    "message": "Payment already verified.",
-                },
-                status=status.HTTP_200_OK,
+        client = razorpay.Client(
+            auth=(
+                settings.RAZORPAY_KEY_ID,
+                settings.RAZORPAY_KEY_SECRET,
             )
+        )
 
-        # -------------------------------------------------
         # Verify Razorpay signature
-        # -------------------------------------------------
-
         try:
-
-            client = razorpay.Client(
-                auth=(
-                    settings.RAZORPAY_KEY_ID,
-                    settings.RAZORPAY_KEY_SECRET,
-                )
-            )
-
             client.utility.verify_payment_signature(
                 {
                     "razorpay_order_id": order_id,
@@ -165,39 +128,118 @@ class VerifyPaymentView(APIView):
                     "razorpay_signature": signature,
                 }
             )
-
         except razorpay.errors.SignatureVerificationError:
-
-            payment.status = "failed"
-            payment.save(
-                update_fields=[
-                    "status",
-                    "updated_at",
-                ]
-            )
-
             return Response(
                 {
                     "success": False,
-                    "message": "Payment verification failed."
+                    "message": "Payment signature verification failed.",
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
-
         except Exception:
-
             return Response(
                 {
                     "success": False,
-                    "message": "Unable to verify payment."
+                    "message": "Unable to verify payment signature.",
                 },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
-        # -------------------------------------------------
-        # Payment verified successfully
-        # -------------------------------------------------
+        # Fetch actual payment details from Razorpay
+        try:
+            razorpay_payment = client.payment.fetch(payment_id)
+        except Exception:
+            return Response(
+                {
+                    "success": False,
+                    "message": (
+                        "Unable to confirm payment status. "
+                        "Please check your dashboard before retrying."
+                    ),
+                },
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
 
+        # Verify payment belongs to this order
+        if razorpay_payment.get("order_id") != order_id:
+            return Response(
+                {
+                    "success": False,
+                    "message": "Payment does not match this order.",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Verify amount and currency
+        expected_amount = int(payment.amount) * 100
+
+        if (
+            razorpay_payment.get("amount") != expected_amount
+            or razorpay_payment.get("currency") != "INR"
+        ):
+            return Response(
+                {
+                    "success": False,
+                    "message": "Payment amount or currency does not match.",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        actual_status = razorpay_payment.get("status")
+
+        # Payment is not captured yet
+        if actual_status != "captured":
+            if actual_status in ("failed", "refunded"):
+                payment.status = "failed"
+                payment.save(update_fields=["status", "updated_at"])
+
+                return Response(
+                    {
+                        "success": False,
+                        "message": "Payment failed or was refunded.",
+                        "payment_status": actual_status,
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            return Response(
+                {
+                    "success": False,
+                    "message": (
+                        "Payment has not been captured yet. "
+                        "Please check again shortly."
+                    ),
+                    "payment_status": actual_status,
+                },
+                status=status.HTTP_202_ACCEPTED,
+            )
+
+        # Prevent a different payment ID from replacing a paid payment
+        if payment.status == "paid":
+            if payment.razorpay_payment_id == payment_id:
+                return Response(
+                    {
+                        "success": True,
+                        "message": "Payment already verified.",
+                        "data": {
+                            "payment_id": payment.id,
+                            "razorpay_payment_id": payment_id,
+                            "amount": payment.amount,
+                            "status": payment.status,
+                        },
+                    },
+                    status=status.HTTP_200_OK,
+                )
+
+            return Response(
+                {
+                    "success": False,
+                    "message": "A different payment is already recorded.",
+                },
+                status=status.HTTP_409_CONFLICT,
+            )
+
+        # Save only after all verification checks pass
         payment.razorpay_payment_id = payment_id
         payment.razorpay_signature = signature
         payment.status = "paid"

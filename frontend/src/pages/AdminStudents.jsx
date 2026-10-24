@@ -18,6 +18,7 @@ import {
   X,
   CheckCircle2,
   AlertCircle,
+  Trash2,
 } from "lucide-react";
 
 import api from "../api/axios";
@@ -172,7 +173,7 @@ const AdminStudents = () => {
       } else {
         setError(
           response.data?.message ||
-            "Unable to fetch students."
+          "Unable to fetch students."
         );
       }
     } catch (err) {
@@ -180,7 +181,7 @@ const AdminStudents = () => {
 
       setError(
         err.response?.data?.message ||
-          "Unable to load students."
+        "Unable to load students."
       );
     } finally {
       setLoading(false);
@@ -266,7 +267,7 @@ const AdminStudents = () => {
       } else {
         alert(
           response.data?.message ||
-            "Unable to fetch student details."
+          "Unable to fetch student details."
         );
       }
     } catch (err) {
@@ -277,13 +278,47 @@ const AdminStudents = () => {
 
       alert(
         err.response?.data?.message ||
-          "Unable to fetch student details."
+        "Unable to fetch student details."
       );
     } finally {
       setDetailsLoading(false);
     }
   };
 
+  const handleDeleteStudent = async (student) => {
+    const confirmed = window.confirm(
+      `Are you sure you want to permanently delete ${student.full_name}?\n\nTheir application, admit card and payment records may also be deleted. This action cannot be undone.`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      const response = await api.delete(
+        `/users/admin/students/${student.id}/`
+      );
+
+      if (response.data?.success) {
+        // Close details modal if this student is open
+        if (selectedStudent?.student?.id === student.id) {
+          setSelectedStudent(null);
+        }
+
+        // Refresh student list and statistics
+        await fetchStudents(true);
+
+        alert(response.data.message || "Student deleted successfully.");
+      } else {
+        alert(response.data?.message || "Unable to delete student.");
+      }
+    } catch (err) {
+      console.error("Delete student error:", err);
+
+      alert(
+        err.response?.data?.message ||
+        "Unable to delete student. Please try again."
+      );
+    }
+  };
 
   // ============================================================
   // ADD STUDENT FORM
@@ -438,7 +473,7 @@ const AdminStudents = () => {
       } else {
         setCreateError(
           response.data?.message ||
-            "Unable to create student."
+          "Unable to create student."
         );
       }
     } catch (err) {
@@ -467,7 +502,7 @@ const AdminStudents = () => {
       } else {
         setCreateError(
           err.response?.data?.message ||
-            "Unable to create student."
+          "Unable to create student."
         );
       }
     } finally {
@@ -1030,7 +1065,7 @@ const AdminStudents = () => {
                                   type={
                                     student.payment
                                       .status ===
-                                    "paid"
+                                      "paid"
                                       ? "success"
                                       : "warning"
                                   }
@@ -1038,7 +1073,7 @@ const AdminStudents = () => {
 
                                   {student.payment
                                     .status ===
-                                  "paid"
+                                    "paid"
                                     ? "Paid"
                                     : "Unpaid"}
 
@@ -1096,22 +1131,27 @@ const AdminStudents = () => {
                           {/* ACTION */}
 
                           <td className="px-5 py-5 text-right">
+                            <div className="flex items-center justify-end gap-2">
 
-                            <button
-                              onClick={() =>
-                                handleViewDetails(
-                                  student.id
-                                )
-                              }
-                              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-white/10 bg-white/[0.04] hover:bg-cyan-500/10 hover:border-cyan-400/20 text-sm text-slate-300 hover:text-cyan-300 transition"
-                            >
+                              {/* VIEW BUTTON */}
+                              <button
+                                onClick={() => handleViewDetails(student.id)}
+                                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-white/10 bg-white/[0.04] hover:bg-cyan-500/10 hover:border-cyan-400/20 text-sm text-slate-300 hover:text-cyan-300 transition"
+                              >
+                                <Eye size={16} />
+                                View
+                              </button>
 
-                              <Eye size={16} />
+                              {/* DELETE BUTTON */}
+                              <button
+                                onClick={() => handleDeleteStudent(student)}
+                                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-red-500/20 bg-red-500/10 hover:bg-red-500/20 text-sm text-red-400 transition"
+                              >
+                                <Trash2 size={16} />
+                                Delete
+                              </button>
 
-                              View
-
-                            </button>
-
+                            </div>
                           </td>
 
                         </tr>
@@ -1462,10 +1502,9 @@ const AdminStudents = () => {
 
                     <DetailItem
                       label="Amount"
-                      value={`₹${
-                        selectedStudent.payment
+                      value={`₹${selectedStudent.payment
                           ?.amount || 0
-                      }`}
+                        }`}
                     />
 
                     <DetailItem

@@ -695,6 +695,48 @@ class AdminStudentDetailView(APIView):
             },
             status=status.HTTP_200_OK,
         )
+    # -----------------------------------------------------
+    # DELETE - PERMANENTLY DELETE STUDENT
+    # -----------------------------------------------------
+
+    def delete(self, request, student_id):
+
+        if not self.check_admin(request):
+            return Response(
+                {
+                    "success": False,
+                    "message": "Admin access required."
+                },
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        try:
+            student = User.objects.get(
+                id=student_id,
+                role="student"
+            )
+
+        except User.DoesNotExist:
+            return Response(
+                {
+                    "success": False,
+                    "message": "Student not found."
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        student_name = student.full_name
+
+        student.delete()
+
+        return Response(
+            {
+                "success": True,
+                "message": f"Student '{student_name}' deleted successfully."
+            },
+            status=status.HTTP_200_OK,
+        )
+    
 # =========================================================
 # ADMIN STUDENT COMPLETE DETAILS
 # =========================================================

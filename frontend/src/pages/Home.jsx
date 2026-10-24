@@ -6,6 +6,7 @@ import Features from "../components/Features";
 import Scholarship from "../components/Scholarship";
 import PrizeSection from "../components/PrizeSection";
 import Gallery from "../components/Gallery";
+import NishchayAcademy from "../components/NishchayAcademy";
 import RegistrationProcess from "../components/RegistrationProcess";
 import Contact from "../components/Contact";
 import Footer from "../components/Footer";
@@ -21,6 +22,7 @@ function Home() {
       <Scholarship />
       <PrizeSection />
       <Gallery />
+      <NishchayAcademy />
       <RegistrationProcess />
       <Contact />
       <Footer />

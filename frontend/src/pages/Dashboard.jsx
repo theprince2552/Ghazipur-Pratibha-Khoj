@@ -505,51 +505,50 @@ function Dashboard() {
           {/* PAYMENT */}
 
           <div className="
-                        rounded-3xl
-                        border
-                        border-white/10
-                        bg-white/5
-                        backdrop-blur-xl
-                        p-6
-                    ">
+    rounded-3xl
+    border
+    border-white/10
+    bg-white/5
+    backdrop-blur-xl
+    p-6
+">
 
+            
             <div className="
-                            flex
-                            items-center
-                            justify-between
-                        ">
+    flex
+    items-center
+    justify-between
+">
 
               <div className="
-                                w-12
-                                h-12
-                                rounded-2xl
-                                bg-blue-500/10
-                                flex
-                                items-center
-                                justify-center
-                                text-blue-400
-                            ">
+        w-12
+        h-12
+        rounded-2xl
+        bg-blue-500/10
+        flex
+        items-center
+        justify-center
+        text-blue-400
+    ">
 
                 <FaCreditCard />
 
               </div>
 
-
-              {payment?.status ===
-                "paid" ? (
+              {payment?.status === "paid" ? (
 
                 <span className="
-                                    flex
-                                    items-center
-                                    gap-2
-                                    px-3
-                                    py-1.5
-                                    rounded-full
-                                    bg-green-500/10
-                                    text-green-400
-                                    text-sm
-                                    font-semibold
-                                ">
+            flex
+            items-center
+            gap-2
+            px-3
+            py-1.5
+            rounded-full
+            bg-green-500/10
+            text-green-400
+            text-sm
+            font-semibold
+        ">
 
                   <FaCheckCircle />
 
@@ -560,17 +559,17 @@ function Dashboard() {
               ) : (
 
                 <span className="
-                                    flex
-                                    items-center
-                                    gap-2
-                                    px-3
-                                    py-1.5
-                                    rounded-full
-                                    bg-yellow-500/10
-                                    text-yellow-400
-                                    text-sm
-                                    font-semibold
-                                ">
+            flex
+            items-center
+            gap-2
+            px-3
+            py-1.5
+            rounded-full
+            bg-yellow-500/10
+            text-yellow-400
+            text-sm
+            font-semibold
+        ">
 
                   <FaClock />
 
@@ -584,10 +583,10 @@ function Dashboard() {
 
 
             <h2 className="
-                            mt-6
-                            text-xl
-                            font-bold
-                        ">
+    mt-6
+    text-xl
+    font-bold
+">
 
               Registration Fee
 
@@ -595,16 +594,48 @@ function Dashboard() {
 
 
             <p className="
-                            mt-2
-                            text-3xl
-                            font-black
-                        ">
+    mt-2
+    text-3xl
+    font-black
+">
 
               ₹{payment?.amount || 100}
 
             </p>
 
+
+            {payment?.status !== "paid" && (
+
+              <button
+                type="button"
+                onClick={() => navigate("/payment")}
+                className="
+            mt-5
+            w-full
+            rounded-full
+            bg-gradient-to-r
+            from-cyan-500
+            to-blue-600
+            px-6
+            py-3
+            text-white
+            font-bold
+            shadow-lg
+            transition
+            hover:scale-[1.02]
+            active:scale-[0.98]
+        "
+              >
+
+                💳 Pay Now
+
+              </button>
+
+            )}
+            
+
           </div>
+
 
 
           {/* EXAM CENTER */}
