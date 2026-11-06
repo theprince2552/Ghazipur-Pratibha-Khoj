@@ -169,14 +169,6 @@ function NishchayAcademy() {
               </p>
             </div>
 
-            <a
-              href={`https://wa.me/${phoneNumber}?text=${whatsappMessage}`}
-target = "_blank"
-rel = "noopener noreferrer"
-className = "inline-flex shrink-0 items-center gap-2 rounded-xl bg-cyan-400 px-6 py-3 font-bold text-[#020617] transition hover:bg-cyan-300"
-    >
-    Enquire Now < FaArrowRight />
-            </a >
           </div >
         </motion.div >
 
@@ -289,69 +281,6 @@ className = "mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2"
               IAS Aspirant
             </p>
           </div>
-        </motion.div >
-
-    {/* Address & Contact */ }
-    < motion.div
-initial = {{ opacity: 0, y: 25 }}
-whileInView = {{ opacity: 1, y: 0 }}
-viewport = {{ once: true }}
-transition = {{ duration: 0.5 }}
-className = "mt-8 rounded-3xl border border-cyan-400/20 bg-gradient-to-br from-[#0B1729] to-[#101C32] p-6 sm:p-9"
-    >
-    <div className="grid grid-cols-1 gap-8 md:grid-cols-2 md:items-center">
-        <div>
-            <span className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">
-                Visit Our Academy
-            </span>
-
-            <h3 className="mt-3 text-2xl font-black text-white sm:text-3xl">
-                Take the First Step Towards Your Goal
-            </h3>
-
-            <div className="mt-5 flex items-start gap-3 text-gray-300">
-                <FaMapMarkerAlt className="mt-1 shrink-0 text-cyan-300" />
-
-                <p className="text-sm leading-7">
-                    Krishna Nagar, Jhunsi, Prayagraj, Uttar Pradesh
-                </p>
-            </div>
-
-            <div className="mt-3 flex items-center gap-3 text-gray-300">
-                <FaPhoneAlt className="text-cyan-300" />
-
-                <p className="text-sm">8429111580</p>
-            </div>
-        </div>
-
-        <div className="flex flex-col gap-3">
-            <a
-                href={`tel:+${phoneNumber}`}
-                className="flex items-center justify-center gap-3 rounded-xl bg-cyan-400 px-5 py-4 font-bold text-[#020617] transition hover:bg-cyan-300"
-            >
-                <FaPhoneAlt /> Call Academy
-            </a>
-
-            <a
-                href={`https://wa.me/${phoneNumber}?text=${whatsappMessage}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-3 rounded-xl border border-emerald-400/30 bg-emerald-400/10 px-5 py-4 font-bold text-emerald-300 transition hover:bg-emerald-400/20"
-            >
-                <FaWhatsapp /> Enquire on WhatsApp
-            </a>
-
-            <a
-                href="https://youtube.com/@rnishchayacademy?si=pqk9Q2DxAgYdvupI"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-3 rounded-xl border border-white/10 bg-white/[0.04] px-5 py-4 font-semibold text-gray-200 transition hover:border-cyan-400/30"
-            >
-                <FaYoutube className="text-red-400" />
-                Nishchay Academy on YouTube
-            </a>
-        </div>
-    </div>
         </motion.div >
 
       </div >

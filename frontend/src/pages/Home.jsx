@@ -26,7 +26,7 @@ function Home() {
       <RegistrationProcess />
       <Contact />
       <Footer />
-    </div> 
+    </div>
   );
 }
 
